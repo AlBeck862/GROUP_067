@@ -40,7 +40,7 @@ class Actor(nn.Module):
         self.max_action = max_action
 
     def forward(self, x):
-        x = F.tanh(self.l1(x))
+        x = torch.tanh(self.l1(x))
         x = self.l2(x)
         #x = self.max_action * torch.tanh(self.l3(x)) 
         return x
@@ -77,8 +77,10 @@ class Critic(nn.Module):
         xu = torch.cat([x, u], 1)
 
         x1 = self.l1(xu)
-        print(type(x1))
+        #print(type(x1))
+        print(x1.shape)
         x1 = self.l2(x1)
+        print(x1.shape)
         #x1 = self.l3(x1)
 
         x2 = self.l3(xu)
