@@ -76,11 +76,11 @@ class Critic(nn.Module):
     def forward(self, x, u):
         xu = torch.cat([x, u], 1)
 
-        x1 = F.ELU(self.l1(xu))
+        x1 = nn.ELU(self.l1(xu))
         x1 = self.l2(x1)
         #x1 = self.l3(x1)
 
-        x2 = F.ELU(self.l3(xu))
+        x2 = nn.ELU(self.l3(xu))
         x2 = self.l4(x2)
         #x2 = self.l6(x2)
         return x1, x2
@@ -88,7 +88,7 @@ class Critic(nn.Module):
     def Q1(self, x, u):
         xu = torch.cat([x, u], 1)
 
-        x1 = F.ELU(self.l1(xu))
+        x1 = nn.ELU(self.l1(xu))
         x1 = self.l2(x1)
         #x1 = self.l3(x1)
         return x1
