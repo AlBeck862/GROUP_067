@@ -65,12 +65,12 @@ class Critic(nn.Module):
 
         # Q1 architecture
         self.l1 = nn.ELU(state_dim + action_dim, 64)
-        self.l2 = nn.Linear(64, 1)
+        self.l2 = nn.Linear(14, 1)
         #self.l3 = nn.Linear(300, 1)
 
         # Q2 architecture
         self.l3 = nn.ELU(state_dim + action_dim, 64)
-        self.l4 = nn.Linear(64, 1)
+        self.l4 = nn.Linear(14, 1)
         #self.l3 = nn.Linear(300, 1)
 
     def forward(self, x, u):
