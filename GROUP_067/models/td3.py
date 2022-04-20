@@ -78,14 +78,14 @@ class Critic(nn.Module):
         xu = torch.cat([x, u], 1)
         x1 = xu
         for i,layer in enumerate(self.layers_Q1):
-            if i < len(self.layers) - 1:
+            if i < len(self.layers_Q1) - 1:
                 x1 = F.relu(layer(x1))
             else:
                 x1 = layer(x1)
 
         x2 = xu
         for i,layer in enumerate(self.layers_Q2):
-            if i < len(self.layers) - 1:
+            if i < len(self.layers_Q2) - 1:
                 x2 = F.relu(layer(x2))
             else:
                 x2 = layer(x2)
