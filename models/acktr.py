@@ -40,6 +40,7 @@ class Actor(nn.Module):
         self.max_action = max_action
 
     def forward(self, x):
+        print('actor forward pass')
         torch.autograd.set_detect_anomaly(True)
         x = torch.tanh(self.l1(x))
         x = self.l2(x)
@@ -75,6 +76,7 @@ class Critic(nn.Module):
         #self.l3 = nn.Linear(300, 1)
 
     def forward(self, x, u):
+        print('critic forward pass')
         torch.autograd.set_detect_anomaly(True)
         xu = torch.cat([x, u], 1)
 
@@ -115,6 +117,7 @@ class ReplayBuffer(object):
         self.ptr = 0
 
     def add(self, data):
+        print('adding memory')
         """Add experience tuples to buffer
         
         Args:
@@ -128,6 +131,7 @@ class ReplayBuffer(object):
             self.storage.append(data)
 
     def sample(self, batch_size):
+        print('sampling from memory')
         """Samples a random amount of experiences from buffer of batch size
         
         Args:
@@ -250,7 +254,7 @@ def compute_cov_a(a, classname, layer_info, fast_cnn):
             a = _extract_patches(a, *layer_info)
             a = a.view(-1, a.size(-1)).div_(a.size(1)).div_(a.size(2))
     elif classname == 'AddBias':
-        print('adding bias in cov a')
+        print('computing cov a in if class if addbias')
         is_cuda = a.is_cuda
         a = torch.ones(a.size(0), 1)
         if is_cuda:
@@ -271,7 +275,7 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
             g = g.transpose(1, 2).transpose(2, 3).contiguous()
             g = g.view(-1, g.size(-1)).mul_(g.size(1)).mul_(g.size(2))
     elif classname == 'AddBias':
-        print('\nadding bias in cov g')
+        print('\ncomputiing in adding bias in cov g')
         g = g.view(g.size(0), g.size(1), -1)
         g = torch.sum(g,-1)
 
@@ -285,6 +289,7 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
 
 
 def update_running_stat(aa, m_aa, momentum):
+    print('update running state')
     # Do the trick to keep aa unchanged and not create any additional tensors
     m_aa *= momentum / (1 - momentum)
     m_aa += aa
@@ -299,6 +304,7 @@ class SplitBias(nn.Module):
         self.module.bias = None
 
     def forward(self, input):
+        print('spliitting bias')
         x = self.module(input)
         x = self.add_bias(x)
         return x
@@ -512,6 +518,7 @@ class Agent(object):
             torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, 'ACKTR_'+filename))
 
         def act(self, curr_obs, mode='eval', noise=0.1):
+            print('taking action')
             """Select an appropriate action from the agent policy
             
                 Args:
@@ -537,6 +544,7 @@ class Agent(object):
             return action.clip(-1, 1)
 
         def update(self, curr_obs, action, reward, next_obs, done, timestep, batch_size=2500, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
+            print('updating network')
             #iteration
             self.it += 1
             
