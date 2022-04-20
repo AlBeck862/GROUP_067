@@ -28,7 +28,7 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
 
         dims =  [state_dim]+[400, 300]+[action_dim]
-        self.layers = []
+        self.layers = nn.ModuleList([])
         for i in range(1,len(dims)):
             self.layers.append(nn.Linear(dims[i-1], dims[i]))
 
@@ -64,13 +64,13 @@ class Critic(nn.Module):
         dims =  [state_dim]+[400, 300]+[action_dim]
 
         #Q1 architecture
-        self.layers_Q1 = []
+        self.layers_Q1 = nn.ModuleList([])
         for i in range(1,len(dims)):
             self.layers_Q1.append(nn.Linear(dims[i-1], dims[i]))
 
 
         #Q2 architecture
-        self.layers_Q2 = []
+        self.layers_Q2 = nn.ModuleList([])
         for i in range(1,len(dims)):
             self.layers_Q2.append(nn.Linear(dims[i-1], dims[i]))
 
