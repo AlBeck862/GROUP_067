@@ -190,6 +190,7 @@ class AddBias(nn.Module):
         self._bias = nn.Parameter(bias.unsqueeze(1))
 
     def forward(self, x):
+        print('forward AddBias')
         if x.dim() == 2:
             bias = self._bias.t().view(1, -1)
         else:
@@ -200,18 +201,21 @@ class AddBias(nn.Module):
 
 def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     """Decreases the learning rate linearly"""
+    print('updating linear schedule')
     lr = initial_lr - (initial_lr * (epoch / float(total_num_epochs)))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
 
 def init(module, weight_init, bias_init, gain=1):
+    print('initializing')
     weight_init(module.weight.data, gain=gain)
     bias_init(module.bias.data)
     return module
 
 
 def cleanup_log_dir(log_dir):
+    print('cleaning up')
     try:
         os.makedirs(log_dir)
     except OSError:
@@ -220,6 +224,7 @@ def cleanup_log_dir(log_dir):
             os.remove(f)
 
 def _extract_patches(x, kernel_size, stride, padding):
+    print('extracting patch')
     if padding[0] + padding[1] > 0:
         x = F.pad(x, (padding[1], padding[1], padding[0],
                       padding[0])).data  # Actually check dims
@@ -314,6 +319,7 @@ class KFACOptimizer(torch.optim.Optimizer):
         defaults = dict()
 
         def split_bias(module):
+            print('splitting bias')
             for mname, child in module.named_children():
                 if hasattr(child, 'bias') and child.bias is not None:
                     module._modules[mname] = SplitBias(child)
@@ -359,6 +365,7 @@ class KFACOptimizer(torch.optim.Optimizer):
             momentum=self.momentum)
 
     def _save_input(self, module, input):
+        print('saving input')
         if torch.is_grad_enabled() and self.steps % self.Ts == 0:
             classname = module.__class__.__name__
             layer_info = None
@@ -377,6 +384,7 @@ class KFACOptimizer(torch.optim.Optimizer):
 
     def _save_grad_output(self, module, grad_input, grad_output):
         # Accumulate statistics for Fisher matrices
+        print('saving grad')
         if self.acc_stats:
             classname = module.__class__.__name__
             layer_info = None
@@ -394,6 +402,7 @@ class KFACOptimizer(torch.optim.Optimizer):
             update_running_stat(gg, self.m_gg[module], self.stat_decay)
 
     def _prepare_model(self):
+        print('prepare model')
         for module in self.model.modules():
             classname = module.__class__.__name__
             if classname in self.known_modules:
@@ -405,7 +414,7 @@ class KFACOptimizer(torch.optim.Optimizer):
                 module.register_backward_hook(self._save_grad_output)
 
     def step(self):
-        print('optimiizing w KFAC')
+        print('step w KFAC')
         # Add weight decay
         if self.weight_decay > 0:
             for p in self.model.parameters():
