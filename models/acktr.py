@@ -291,9 +291,12 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
 def update_running_stat(aa, m_aa, momentum):
     print('update running state')
     # Do the trick to keep aa unchanged and not create any additional tensors
-    m_aa *= momentum / (1 - momentum)
-    m_aa += aa
-    m_aa *= (1 - momentum)
+    m_aa = m_aa* momentum / (1 - momentum)
+    print(f'printing m_aa1 {m_aa}')
+    print(f'printing aa {aa}')
+    m_aa = m_aa +aa
+
+    m_aa = m_aa*(1 - momentum)
 
 
 class SplitBias(nn.Module):
