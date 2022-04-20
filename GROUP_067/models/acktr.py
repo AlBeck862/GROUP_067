@@ -340,6 +340,8 @@ class KFACOptimizer(torch.optim.Optimizer):
         self.Ts = Ts
         self.Tf = Tf
 
+        self.acc_stats=True
+
         self.optim = optim.SGD(
             model.parameters(),
             lr=self.lr * (1 - self.momentum),
@@ -467,6 +469,7 @@ class Agent(object):
             self.actor_target = Actor(state_dim, action_dim, max_action).to(device)
             self.actor_target.load_state_dict(self.actor.state_dict())
             self.actor_optimizer = KFACOptimizer(self.actor)
+            
 
             self.critic = Critic(state_dim, action_dim).to(device)
             self.critic_target = Critic(state_dim, action_dim).to(device)
