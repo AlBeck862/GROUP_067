@@ -25,7 +25,7 @@ class Actor(nn.Module):
         Return:
             action output of network with tanh activation
     """
-    def __init__(self, state_dim, action_dim, max_action, dims_inner = [400, 300]):
+    def __init__(self, state_dim, action_dim, max_action, dims_inner = [400, 300], activation=F.relu):
         super(Actor, self).__init__()
 
         dims =  [state_dim]+dims_inner+[action_dim]
@@ -34,11 +34,12 @@ class Actor(nn.Module):
             self.layers.append(nn.Linear(dims[i-1], dims[i]))
 
         self.max_action = max_action
+        self.activation = activation
 
     def forward(self, x):
         for i,layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                x = F.relu(layer(x))
+                x = self.activation(layer(x))
             else:
                 x = self.max_action * torch.tanh(layer(x)) 
        
@@ -59,10 +60,11 @@ class Critic(nn.Module):
             value output of network 
     """
     
-    def __init__(self, state_dim, action_dim, dims_inner = [400, 300]):
+    def __init__(self, state_dim, action_dim, dims_inner = [400, 300], activation=F.relu):
         super(Critic, self).__init__()
 
         dims =  [state_dim+action_dim]+dims_inner+[1]
+        self.activation = activation
 
         #Q1 architecture
         self.layers_Q1 = nn.ModuleList([])
@@ -80,14 +82,14 @@ class Critic(nn.Module):
         x1 = xu
         for i,layer in enumerate(self.layers_Q1):
             if i < len(self.layers_Q1) - 1:
-                x1 = F.relu(layer(x1))
+                x1 = self.activation(layer(x1))
             else:
                 x1 = layer(x1)
 
         x2 = xu
         for i,layer in enumerate(self.layers_Q2):
             if i < len(self.layers_Q2) - 1:
-                x2 = F.relu(layer(x2))
+                x2 = self.activation(layer(x2))
             else:
                 x2 = layer(x2)
         
@@ -98,7 +100,7 @@ class Critic(nn.Module):
         x1 = xu
         for i,layer in enumerate(self.layers_Q1):
             if i < len(self.layers_Q1) - 1:
-                x1 = F.relu(layer(x1))
+                x1 = self.activation(layer(x1))
             else:
                 x1 = layer(x1)
         return x1
@@ -158,21 +160,11 @@ class ReplayBuffer(object):
 
 
 
-
-
-
-
-
-
-
-
-
-
 class Agent(object):
     """Agent class that handles the training of the networks and provides outputs as actions
     """
 
-    def __init__(self, env_specs, max_action=1, pretrained=False, lr=1e-3, dims_inner = [400, 300]):
+    def __init__(self, env_specs, max_action=1, pretrained=False, lr=1e-3, dims_inner = [400, 300], activation_critic=F.relu, activation_actor=F.relu):
         self.env_specs = env_specs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         state_dim = self.env_specs['observation_space'].shape[0]
@@ -180,13 +172,13 @@ class Agent(object):
 
         self.lr = lr
 
-        self.actor = Actor(state_dim, action_dim, max_action, dims_inner=dims_inner).to(self.device)
-        self.actor_target = Actor(state_dim, action_dim, max_action, dims_inner=dims_inner).to(self.device)
+        self.actor = Actor(state_dim, action_dim, max_action, dims_inner=dims_inner, activation=activation_actor).to(self.device)
+        self.actor_target = Actor(state_dim, action_dim, max_action, dims_inner=dims_inner, activation=activation_actor).to(self.device)
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
 
-        self.critic = Critic(state_dim, action_dim, dims_inner=dims_inner).to(self.device)
-        self.critic_target = Critic(state_dim, action_dim, dims_inner=dims_inner).to(self.device)
+        self.critic = Critic(state_dim, action_dim, dims_inner=dims_inner, activation=activation_critic).to(self.device)
+        self.critic_target = Critic(state_dim, action_dim, dims_inner=dims_inner, activation=activation_critic).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
