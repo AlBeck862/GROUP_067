@@ -270,9 +270,9 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
 
 def update_running_stat(aa, m_aa, momentum):
     # Do the trick to keep aa unchanged and not create any additional tensors
-    m_aa *= momentum / (1 - momentum)
-    m_aa += aa
-    m_aa *= (1 - momentum)
+    m_aa = m_aa* momentum / (1 - momentum)
+    m_aa = m_aa+aa
+    m_aa = m_aa*(1 - momentum)
 
 
 class SplitBias(nn.Module):
@@ -436,7 +436,7 @@ class KFACOptimizer(torch.optim.Optimizer):
         vg_sum = 0
         for p in self.model.parameters():
             v = updates[p]
-            vg_sum += (v * p.grad.data * self.lr * self.lr).sum()
+            vg_sum = vg_sum + ((v * p.grad.data * self.lr * self.lr).sum())
 
         nu = min(1, math.sqrt(self.kl_clip / vg_sum))
 
@@ -446,7 +446,7 @@ class KFACOptimizer(torch.optim.Optimizer):
             p.grad.data.mul_(nu)
 
         self.optim.step()
-        self.steps += 1
+        self.steps = self.steps+1
 
 ################# AGENT ############
 
@@ -492,6 +492,7 @@ class Agent(object):
             torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, 'ACKTR_'+filename))
 
         def act(self, curr_obs, mode='eval', noise=0.1):
+            torch.autograd.set_detect_anomaly(True)
             """Select an appropriate action from the agent policy
             
                 Args:
@@ -518,8 +519,9 @@ class Agent(object):
 
         def update(self, curr_obs, action, reward, next_obs, done, timestep, batch_size=2500, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
             #iteration
-            self.it = self.it+ 1
             torch.autograd.set_detect_anomaly(True)
+            self.it = self.it+ 1
+            
             self.replay_buffer.add((curr_obs, next_obs, action, reward, done))
 
             if len(self.replay_buffer.storage) > self.buffer_start:
