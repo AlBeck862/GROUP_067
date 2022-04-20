@@ -28,7 +28,7 @@ class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action, dims_inner = [400, 300]):
         super(Actor, self).__init__()
 
-        dims =  [state_dim]+[400, 300]+[action_dim]
+        dims =  [state_dim]+dims_inner+[action_dim]
         self.layers = nn.ModuleList([])
         for i in range(1,len(dims)):
             self.layers.append(nn.Linear(dims[i-1], dims[i]))
