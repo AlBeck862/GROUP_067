@@ -64,24 +64,24 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
 
         # Q1 architecture
-        self.l1 = nn.Linear(state_dim + action_dim, 64)
+        self.l1 = nn.ELU(state_dim + action_dim, 64)
         self.l2 = nn.Linear(64, 1)
         #self.l3 = nn.Linear(300, 1)
 
         # Q2 architecture
-        self.l3 = nn.Linear(state_dim + action_dim, 64)
+        self.l3 = nn.ELU(state_dim + action_dim, 64)
         self.l4 = nn.Linear(64, 1)
         #self.l3 = nn.Linear(300, 1)
 
     def forward(self, x, u):
         xu = torch.cat([x, u], 1)
 
-        x1 = nn.ELU(self.l1(xu))
+        x1 = self.l1(xu)
         print(type(x1))
         x1 = self.l2(x1)
         #x1 = self.l3(x1)
 
-        x2 = nn.ELU(self.l3(xu))
+        x2 = self.l3(xu)
         x2 = self.l4(x2)
         #x2 = self.l6(x2)
         return x1, x2
@@ -89,7 +89,7 @@ class Critic(nn.Module):
     def Q1(self, x, u):
         xu = torch.cat([x, u], 1)
 
-        x1 = nn.ELU(self.l1(xu))
+        x1 = self.l1(xu)
         x1 = self.l2(x1)
         #x1 = self.l3(x1)
         return x1
