@@ -40,6 +40,7 @@ class Actor(nn.Module):
         self.max_action = max_action
 
     def forward(self, x):
+        torch.autograd.set_detect_anomaly(True)
         x = torch.tanh(self.l1(x))
         x = self.l2(x)
         #x = self.max_action * torch.tanh(self.l3(x)) 
@@ -74,6 +75,7 @@ class Critic(nn.Module):
         #self.l3 = nn.Linear(300, 1)
 
     def forward(self, x, u):
+        torch.autograd.set_detect_anomaly(True)
         xu = torch.cat([x, u], 1)
 
         x1 = self.l1(xu)
