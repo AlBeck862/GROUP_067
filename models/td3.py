@@ -183,8 +183,10 @@ class Agent(object):
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
         print('-------------------------- Actor ---------------------------')
+        print(activation_actor)
         print(self.actor)
         print('\n------------------------- Critic ---------------------------')
+        print(activation_critic)
         print(self.critic)
 
         self.replay_buffer = ReplayBuffer()
