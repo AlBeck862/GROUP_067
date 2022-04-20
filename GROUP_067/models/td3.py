@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+from torchsummary import summary
 
 
 
@@ -61,7 +62,7 @@ class Critic(nn.Module):
     def __init__(self, state_dim, action_dim, dims_inner = [400, 300]):
         super(Critic, self).__init__()
 
-        dims =  [state_dim]+[400, 300]+[action_dim]
+        dims =  [state_dim+action_dim]+dims_inner+[1]
 
         #Q1 architecture
         self.layers_Q1 = nn.ModuleList([])
