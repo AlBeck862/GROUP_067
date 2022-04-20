@@ -77,6 +77,7 @@ class Critic(nn.Module):
         xu = torch.cat([x, u], 1)
 
         x1 = nn.ELU(self.l1(xu))
+        print(type(x1))
         x1 = self.l2(x1)
         #x1 = self.l3(x1)
 
