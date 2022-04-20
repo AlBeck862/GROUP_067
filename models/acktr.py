@@ -236,6 +236,7 @@ def compute_cov_a(a, classname, layer_info, fast_cnn):
     batch_size = a.size(0)
 
     if classname == 'Conv2d':
+        print('in conv2d cov a')
         if fast_cnn:
             a = _extract_patches(a, *layer_info)
             a = a.view(a.size(0), -1, a.size(-1))
@@ -244,6 +245,7 @@ def compute_cov_a(a, classname, layer_info, fast_cnn):
             a = _extract_patches(a, *layer_info)
             a = a.view(-1, a.size(-1)).div_(a.size(1)).div_(a.size(2))
     elif classname == 'AddBias':
+        print('adding bias in cov a')
         is_cuda = a.is_cuda
         a = torch.ones(a.size(0), 1)
         if is_cuda:
@@ -256,6 +258,7 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
     batch_size = g.size(0)
 
     if classname == 'Conv2d':
+        print('\n in conv2d in covg')
         if fast_cnn:
             g = g.view(g.size(0), g.size(1), -1)
             g = g.sum(-1)
@@ -263,6 +266,7 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
             g = g.transpose(1, 2).transpose(2, 3).contiguous()
             g = g.view(-1, g.size(-1)).mul_(g.size(1)).mul_(g.size(2))
     elif classname == 'AddBias':
+        print('\nadding bias in cov g')
         g = g.view(g.size(0), g.size(1), -1)
         g = g.sum(-1)
 
@@ -428,7 +432,7 @@ class KFACOptimizer(torch.optim.Optimizer):
                 p_grad_mat = p.grad.data
 
             v1 = self.Q_g[m].t() @ p_grad_mat @ self.Q_a[m]
-            v2 = v1 / (
+            v2 = v1.clone() / (
                 self.d_g[m].unsqueeze(1) * self.d_a[m].unsqueeze(0) + la)
             v = self.Q_g[m] @ v2 @ self.Q_a[m].t()
 
@@ -438,7 +442,7 @@ class KFACOptimizer(torch.optim.Optimizer):
         vg_sum = 0
         for p in self.model.parameters():
             v = updates[p]
-            vg_sum += (v * p.grad.data * self.lr * self.lr).sum()
+            vg_sum = vg_sum+ (v.clone() * p.grad.data * self.lr * self.lr).sum()
 
         nu = min(1, math.sqrt(self.kl_clip / vg_sum))
 
@@ -552,7 +556,7 @@ class Agent(object):
               # Optimize the critic
               self.critic_optimizer.zero_grad()
               self.critic_optimizer.acc_stats = True
-              critic_loss.backward(retain_graph=True)
+              critic_loss.backward(retain_graph=True,inputs=list(self.critic.parameters()))
               self.critic_optimizer.acc_stats = False
               self.critic_optimizer.step()
 
@@ -565,7 +569,7 @@ class Agent(object):
                   # Optimize the actor 
                   self.actor_optimizer.zero_grad()
                   self.actor_optimizer.acc_stats = True
-                  actor_loss.backward()
+                  actor_loss.backward(inputs=list(self.actor.parameters()))
                   self.actor_optimizer.acc_stats = False
                   self.actor_optimizer.step()
 
