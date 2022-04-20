@@ -271,6 +271,9 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
         g = torch.sum(g,-1)
 
     g_ = g * batch_size
+    print(f'g_ size: {g_.size()}')
+    print(f'g size: {g.size()}')
+    print(f'printing g_: {g_}')
     print(f'printing g_.t(): {g_.t()}')
     print(f'printing return statement: {g_.t() @ (g_ / g.size(0))} ')
     return g_.t() @ (g_ / g.size(0))
