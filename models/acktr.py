@@ -285,7 +285,7 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
     print(f'printing g_: {g_}')
     print(f'printing g_.t(): {g_.t()}')
     print(f'printing return statement: {g_.t() @ (g_ / g.size(0))} ')
-    return g_.t() @ (g_ / g.size(0))
+    return g_.t() #@ (g_ / g.size(0))
 
 
 def update_running_stat(aa, m_aa, momentum):
