@@ -268,9 +268,11 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
     elif classname == 'AddBias':
         print('\nadding bias in cov g')
         g = g.view(g.size(0), g.size(1), -1)
-        g = g.sum(-1)
+        g = torch.sum(g,-1)
 
     g_ = g * batch_size
+    print(f'printing g_.t(): {g_.t()}')
+    print(f'printing return statement: {g_.t() @ (g_ / g.size(0))} ')
     return g_.t() @ (g_ / g.size(0))
 
 
