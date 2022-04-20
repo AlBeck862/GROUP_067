@@ -550,7 +550,7 @@ class Agent(object):
               # Optimize the critic
               self.critic_optimizer.zero_grad()
               self.critic_optimizer.acc_stats = True
-              critic_loss.backward()
+              critic_loss.backward(retain_graph=True)
               self.critic_optimizer.acc_stats = False
               self.critic_optimizer.step()
 
