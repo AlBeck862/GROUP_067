@@ -28,7 +28,7 @@ class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action, dims_inner = [400, 300]):
         super(Actor, self).__init__()
 
-        dims =  [state_dim]+[400, 300]+[action_dim]
+        dims =  [state_dim]+dims_inner+[action_dim]
         self.layers = nn.ModuleList([])
         for i in range(1,len(dims)):
             self.layers.append(nn.Linear(dims[i-1], dims[i]))
@@ -97,7 +97,7 @@ class Critic(nn.Module):
         xu = torch.cat([x, u], 1)
         x1 = xu
         for i,layer in enumerate(self.layers_Q1):
-            if i < len(self.layers) - 1:
+            if i < len(self.layers_Q1) - 1:
                 x1 = F.relu(layer(x1))
             else:
                 x1 = layer(x1)
@@ -189,6 +189,11 @@ class Agent(object):
         self.critic_target = Critic(state_dim, action_dim, dims_inner=dims_inner).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
+
+        print('-------------------------- Actor ---------------------------')
+        print(self.actor)
+        print('\n------------------------- Critic ---------------------------')
+        print(self.critic)
 
         self.replay_buffer = ReplayBuffer()
         self.max_action = max_action
