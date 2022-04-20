@@ -194,6 +194,7 @@ class Agent(object):
         self.buffer_start = 1000
         self.it = 0
         self.pretrained = pretrained
+        self.create_graph = False
 
     def load_weights(self, root_path):
         directory = root_path+'weights'
@@ -263,7 +264,7 @@ class Agent(object):
 
           # Optimize the critic
           self.critic_optimizer.zero_grad()
-          critic_loss.backward()
+          critic_loss.backward(create_graph = self.create_graph)
           self.critic_optimizer.step()
 
           # Delayed policy updates
@@ -274,7 +275,7 @@ class Agent(object):
 
               # Optimize the actor 
               self.actor_optimizer.zero_grad()
-              actor_loss.backward()
+              actor_loss.backward(create_graph = self.create_graph)
               self.actor_optimizer.step()
 
               # Update the frozen target models
