@@ -190,6 +190,11 @@ class Agent(object):
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.lr)
 
+        print('-------------------------- Actor ---------------------------')
+        print(self.actor)
+        print('\n------------------------- Critic ---------------------------')
+        print(self.critic)
+
         self.replay_buffer = ReplayBuffer()
         self.max_action = max_action
         self.buffer_start = 1000
