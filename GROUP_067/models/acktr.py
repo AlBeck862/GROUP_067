@@ -78,9 +78,9 @@ class Critic(nn.Module):
 
         x1 = self.l1(xu)
         #print(type(x1))
-        print(x1.shape)
+        #print(x1.shape)
         x1 = self.l2(x1)
-        print(x1.shape)
+        #print(x1.shape)
         #x1 = self.l3(x1)
 
         x2 = self.l3(xu)
@@ -546,7 +546,9 @@ class Agent(object):
 
               # Optimize the critic
               self.critic_optimizer.zero_grad()
+              self.optimizer.acc_stats = True
               critic_loss.backward()
+              self.optimizer.acc_stats = False
               self.critic_optimizer.step()
 
               # Delayed policy updates
@@ -557,7 +559,9 @@ class Agent(object):
 
                   # Optimize the actor 
                   self.actor_optimizer.zero_grad()
+                  self.optimizer.acc_stats = True
                   actor_loss.backward()
+                  self.optimizer.acc_stats = False
                   self.actor_optimizer.step()
 
                   # Update the frozen target models
