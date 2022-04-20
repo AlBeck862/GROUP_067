@@ -445,7 +445,7 @@ class KFACOptimizer(torch.optim.Optimizer):
 
 ################# AGENT ############
 
-class ACKTR_Agent(object):
+class Agent(object):
         """Agent class that handles the training of the networks and provides outputs as actions
     
         Args:
