@@ -189,10 +189,16 @@ class Agent():
     self.env_specs = env_specs
 
 
+  def load_weights(self, root_path):
+    directory = root_path+'weights'
+    filename = 'DDPG'
+    actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
+    critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
 
-  def load_weights(self):
-    pass
 
+  def save(self, filename='', directory=''):
+    torch.save(actor.state_dict(), '%s/%s_actor.pth' % (directory, 'DDPG_'+filename))
+    torch.save(critic.state_dict(), '%s/%s_critic.pth' % (directory, 'DDPG_'+filename))
 
 
   def act(self, curr_obs, mode='eval'):
