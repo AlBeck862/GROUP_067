@@ -197,8 +197,8 @@ class Agent():
 
 
   def save(self, filename='', directory=''):
-    torch.save(actor.state_dict(), '%s/%s_actor.pth' % (directory, 'DDPG_'+filename))
-    torch.save(critic.state_dict(), '%s/%s_critic.pth' % (directory, 'DDPG_'+filename))
+    torch.save(actor.state_dict(), '%s/%s_actor.pth' % (directory, filename))
+    torch.save(critic.state_dict(), '%s/%s_critic.pth' % (directory, filename))
 
 
   def act(self, curr_obs, mode='eval'):
