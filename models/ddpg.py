@@ -189,9 +189,7 @@ class Agent():
     self.env_specs = env_specs
 
 
-  def load_weights(self, root_path):
-    directory = root_path+'weights'
-    filename = 'DDPG'
+  def load_weights(self, filename='', directory=''):
     actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
     critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
 
