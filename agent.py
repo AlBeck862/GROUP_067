@@ -160,6 +160,7 @@ class Agent(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         state_dim = self.env_specs['observation_space'].shape[0]
         action_dim = self.env_specs['action_space'].shape[0]
+        self.update_num = 5
 
         self.lr = lr
 
@@ -222,48 +223,49 @@ class Agent(object):
 
         if len(self.replay_buffer.storage) > self.buffer_start:
           # Sample replay buffer storage
-          x, y, u, r, d = self.replay_buffer.sample(batch_size)
-          state = torch.FloatTensor(x).to(self.device)
-          action = torch.FloatTensor(u).to(self.device)
-          next_state = torch.FloatTensor(y).to(self.device)
-          done = torch.FloatTensor(1 - d).to(self.device)
-          reward = torch.FloatTensor(r).to(self.device)
+          for _ in range(self.update_num):
+              x, y, u, r, d = self.replay_buffer.sample(batch_size)
+              state = torch.FloatTensor(x).to(self.device)
+              action = torch.FloatTensor(u).to(self.device)
+              next_state = torch.FloatTensor(y).to(self.device)
+              done = torch.FloatTensor(1 - d).to(self.device)
+              reward = torch.FloatTensor(r).to(self.device)
 
-          # Select action according to policy and add clipped noise 
-          noise = torch.FloatTensor(u).data.normal_(0, policy_noise).to(self.device)
-          noise = noise.clamp(-noise_clip, noise_clip)
-          next_action = (self.actor_target(next_state) + noise).clamp(-self.max_action, self.max_action)
+              # Select action according to policy and add clipped noise 
+              noise = torch.FloatTensor(u).data.normal_(0, policy_noise).to(self.device)
+              noise = noise.clamp(-noise_clip, noise_clip)
+              next_action = (self.actor_target(next_state) + noise).clamp(-self.max_action, self.max_action)
 
-          # Compute the target Q value
-          target_Q1, target_Q2 = self.critic_target(next_state, next_action)
-          target_Q = torch.min(target_Q1, target_Q2)
-          target_Q = reward + (done * discount * target_Q).detach()
+              # Compute the target Q value
+              target_Q1, target_Q2 = self.critic_target(next_state, next_action)
+              target_Q = torch.min(target_Q1, target_Q2)
+              target_Q = reward + (done * discount * target_Q).detach()
 
-          # Get current Q estimates
-          current_Q1, current_Q2 = self.critic(state, action)
+              # Get current Q estimates
+              current_Q1, current_Q2 = self.critic(state, action)
 
-          # Compute critic loss
-          critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
+              # Compute critic loss
+              critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
 
-          # Optimize the critic
-          self.critic_optimizer.zero_grad()
-          critic_loss.backward()
-          self.critic_optimizer.step()
+              # Optimize the critic
+              self.critic_optimizer.zero_grad()
+              critic_loss.backward()
+              self.critic_optimizer.step()
 
-          # Delayed policy updates
-          if self.it % policy_freq == 0:
+              # Delayed policy updates
+              if self.it % policy_freq == 0:
 
-              # Compute actor loss
-              actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
+                  # Compute actor loss
+                  actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
 
-              # Optimize the actor 
-              self.actor_optimizer.zero_grad()
-              actor_loss.backward()
-              self.actor_optimizer.step()
+                  # Optimize the actor 
+                  self.actor_optimizer.zero_grad()
+                  actor_loss.backward()
+                  self.actor_optimizer.step()
 
-              # Update the frozen target models
-              for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
-                  target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+                  # Update the frozen target models
+                  for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
+                      target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
-              for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
-                  target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+                  for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
+                      target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
