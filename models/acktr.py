@@ -40,6 +40,8 @@ class Actor(nn.Module):
         self.max_action = max_action
 
     def forward(self, x):
+        print('actor forward pass')
+        torch.autograd.set_detect_anomaly(True)
         x = torch.tanh(self.l1(x))
         x = self.l2(x)
         #x = self.max_action * torch.tanh(self.l3(x)) 
@@ -74,6 +76,8 @@ class Critic(nn.Module):
         #self.l3 = nn.Linear(300, 1)
 
     def forward(self, x, u):
+        print('critic forward pass')
+        torch.autograd.set_detect_anomaly(True)
         xu = torch.cat([x, u], 1)
 
         x1 = self.l1(xu)
@@ -113,6 +117,7 @@ class ReplayBuffer(object):
         self.ptr = 0
 
     def add(self, data):
+        print('adding memory')
         """Add experience tuples to buffer
         
         Args:
@@ -126,6 +131,7 @@ class ReplayBuffer(object):
             self.storage.append(data)
 
     def sample(self, batch_size):
+        print('sampling from memory')
         """Samples a random amount of experiences from buffer of batch size
         
         Args:
@@ -188,6 +194,7 @@ class AddBias(nn.Module):
         self._bias = nn.Parameter(bias.unsqueeze(1))
 
     def forward(self, x):
+        print('forward AddBias')
         if x.dim() == 2:
             bias = self._bias.t().view(1, -1)
         else:
@@ -198,18 +205,21 @@ class AddBias(nn.Module):
 
 def update_linear_schedule(optimizer, epoch, total_num_epochs, initial_lr):
     """Decreases the learning rate linearly"""
+    print('updating linear schedule')
     lr = initial_lr - (initial_lr * (epoch / float(total_num_epochs)))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
 
 def init(module, weight_init, bias_init, gain=1):
+    print('initializing')
     weight_init(module.weight.data, gain=gain)
     bias_init(module.bias.data)
     return module
 
 
 def cleanup_log_dir(log_dir):
+    print('cleaning up')
     try:
         os.makedirs(log_dir)
     except OSError:
@@ -218,6 +228,7 @@ def cleanup_log_dir(log_dir):
             os.remove(f)
 
 def _extract_patches(x, kernel_size, stride, padding):
+    print('extracting patch')
     if padding[0] + padding[1] > 0:
         x = F.pad(x, (padding[1], padding[1], padding[0],
                       padding[0])).data  # Actually check dims
@@ -234,6 +245,7 @@ def compute_cov_a(a, classname, layer_info, fast_cnn):
     batch_size = a.size(0)
 
     if classname == 'Conv2d':
+        print('in conv2d cov a')
         if fast_cnn:
             a = _extract_patches(a, *layer_info)
             a = a.view(a.size(0), -1, a.size(-1))
@@ -242,6 +254,7 @@ def compute_cov_a(a, classname, layer_info, fast_cnn):
             a = _extract_patches(a, *layer_info)
             a = a.view(-1, a.size(-1)).div_(a.size(1)).div_(a.size(2))
     elif classname == 'AddBias':
+        print('computing cov a in if class if addbias')
         is_cuda = a.is_cuda
         a = torch.ones(a.size(0), 1)
         if is_cuda:
@@ -254,6 +267,7 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
     batch_size = g.size(0)
 
     if classname == 'Conv2d':
+        print('\n in conv2d in covg')
         if fast_cnn:
             g = g.view(g.size(0), g.size(1), -1)
             g = g.sum(-1)
@@ -261,18 +275,28 @@ def compute_cov_g(g, classname, layer_info, fast_cnn):
             g = g.transpose(1, 2).transpose(2, 3).contiguous()
             g = g.view(-1, g.size(-1)).mul_(g.size(1)).mul_(g.size(2))
     elif classname == 'AddBias':
+        print('\ncomputiing in adding bias in cov g')
         g = g.view(g.size(0), g.size(1), -1)
-        g = g.sum(-1)
+        g = torch.sum(g,-1)
 
     g_ = g * batch_size
-    return g_.t() @ (g_ / g.size(0))
+    print(f'g_ size: {g_.size()}')
+    print(f'g size: {g.size()}')
+    print(f'printing g_: {g_}')
+    print(f'printing g_.t(): {g_.t()}')
+    print(f'printing return statement: {g_.t() @ (g_ / g.size(0))} ')
+    return g_#.t() #@ (g_ / g.size(0))
 
 
 def update_running_stat(aa, m_aa, momentum):
+    print('update running state')
     # Do the trick to keep aa unchanged and not create any additional tensors
-    m_aa *= momentum / (1 - momentum)
-    m_aa += aa
-    m_aa *= (1 - momentum)
+    m_aa = m_aa* momentum / (1 - momentum)
+    print(f'printing m_aa1 {m_aa}')
+    print(f'printing aa {aa}')
+    m_aa = m_aa +aa
+
+    m_aa = m_aa*(1 - momentum)
 
 
 class SplitBias(nn.Module):
@@ -283,6 +307,7 @@ class SplitBias(nn.Module):
         self.module.bias = None
 
     def forward(self, input):
+        print('spliitting bias')
         x = self.module(input)
         x = self.add_bias(x)
         return x
@@ -303,6 +328,7 @@ class KFACOptimizer(torch.optim.Optimizer):
         defaults = dict()
 
         def split_bias(module):
+            print('splitting bias')
             for mname, child in module.named_children():
                 if hasattr(child, 'bias') and child.bias is not None:
                     module._modules[mname] = SplitBias(child)
@@ -348,6 +374,7 @@ class KFACOptimizer(torch.optim.Optimizer):
             momentum=self.momentum)
 
     def _save_input(self, module, input):
+        print('saving input')
         if torch.is_grad_enabled() and self.steps % self.Ts == 0:
             classname = module.__class__.__name__
             layer_info = None
@@ -366,6 +393,7 @@ class KFACOptimizer(torch.optim.Optimizer):
 
     def _save_grad_output(self, module, grad_input, grad_output):
         # Accumulate statistics for Fisher matrices
+        print('saving grad')
         if self.acc_stats:
             classname = module.__class__.__name__
             layer_info = None
@@ -383,6 +411,7 @@ class KFACOptimizer(torch.optim.Optimizer):
             update_running_stat(gg, self.m_gg[module], self.stat_decay)
 
     def _prepare_model(self):
+        print('prepare model')
         for module in self.model.modules():
             classname = module.__class__.__name__
             if classname in self.known_modules:
@@ -394,7 +423,7 @@ class KFACOptimizer(torch.optim.Optimizer):
                 module.register_backward_hook(self._save_grad_output)
 
     def step(self):
-        print('optimiizing w KFAC')
+        print('step w KFAC')
         # Add weight decay
         if self.weight_decay > 0:
             for p in self.model.parameters():
@@ -426,7 +455,7 @@ class KFACOptimizer(torch.optim.Optimizer):
                 p_grad_mat = p.grad.data
 
             v1 = self.Q_g[m].t() @ p_grad_mat @ self.Q_a[m]
-            v2 = v1 / (
+            v2 = v1.clone() / (
                 self.d_g[m].unsqueeze(1) * self.d_a[m].unsqueeze(0) + la)
             v = self.Q_g[m] @ v2 @ self.Q_a[m].t()
 
@@ -436,7 +465,7 @@ class KFACOptimizer(torch.optim.Optimizer):
         vg_sum = 0
         for p in self.model.parameters():
             v = updates[p]
-            vg_sum += (v * p.grad.data * self.lr * self.lr).sum()
+            vg_sum = vg_sum+ (v.clone() * p.grad.data * self.lr * self.lr).sum()
 
         nu = min(1, math.sqrt(self.kl_clip / vg_sum))
 
@@ -492,6 +521,7 @@ class Agent(object):
             torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, 'ACKTR_'+filename))
 
         def act(self, curr_obs, mode='eval', noise=0.1):
+            print('taking action')
             """Select an appropriate action from the agent policy
             
                 Args:
@@ -517,6 +547,7 @@ class Agent(object):
             return action.clip(-1, 1)
 
         def update(self, curr_obs, action, reward, next_obs, done, timestep, batch_size=2500, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
+            print('updating network')
             #iteration
             self.it += 1
             
@@ -550,7 +581,7 @@ class Agent(object):
               # Optimize the critic
               self.critic_optimizer.zero_grad()
               self.critic_optimizer.acc_stats = True
-              critic_loss.backward(retain_graph=True)
+              critic_loss.backward(retain_graph=True,inputs=list(self.critic.parameters()))
               self.critic_optimizer.acc_stats = False
               self.critic_optimizer.step()
 
@@ -563,7 +594,7 @@ class Agent(object):
                   # Optimize the actor 
                   self.actor_optimizer.zero_grad()
                   self.actor_optimizer.acc_stats = True
-                  actor_loss.backward()
+                  actor_loss.backward(inputs=list(self.actor.parameters()))
                   self.actor_optimizer.acc_stats = False
                   self.actor_optimizer.step()
 

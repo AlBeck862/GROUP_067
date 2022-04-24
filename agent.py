@@ -146,6 +146,7 @@ class Agent(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         state_dim = self.env_specs['observation_space'].shape[0]
         action_dim = self.env_specs['action_space'].shape[0]
+        self.update_num = 5
 
         self.lr = lr
         self.weight_decay = weight_decay
