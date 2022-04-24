@@ -139,9 +139,14 @@ class ReplayBuffer(object):
 
 class Agent(object):
     """Agent class that handles the training of the networks and provides outputs as actions
+        lr = 1e-3
+        batch_size = 100
+        weight_decay = 0
+        tdg_error_weight = 0
+        td_error_weight = 1
     """
 
-    def __init__(self, env_specs, max_action=1, pretrained=False, num_grad_updates = 5,tdg_error_weight = 5, td_error_weight = 1, lr=1e-3, weight_decay=1e-4, dims_inner = [400, 300], activation_critic=F.relu, activation_actor=F.relu, batch_size=256):
+    def __init__(self, env_specs, max_action=1, pretrained=False, num_grad_updates = 5,tdg_error_weight = 0, td_error_weight = 1, lr=1e-3, weight_decay=0, dims_inner = [400, 300], activation_critic=F.relu, activation_actor=F.relu, batch_size=100):
         self.env_specs = env_specs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         state_dim = self.env_specs['observation_space'].shape[0]
