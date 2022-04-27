@@ -133,10 +133,6 @@ class ReplayBuffer(object):
         return np.array(states), np.array(actions), np.array(next_states), np.array(rewards).reshape(-1, 1), np.array(dones).reshape(-1, 1)
 
 
-
-
-
-
 class Agent(object):
     """Agent class that handles the training of the networks and provides outputs as actions
         lr = 1e-3
