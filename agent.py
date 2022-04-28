@@ -162,24 +162,12 @@ class Agent(object):
         self.actor = Actor(state_dim, action_dim, max_action, dims_inner=dims_inner, activation=activation_actor).to(self.device)
         self.actor_target = Actor(state_dim, action_dim, max_action, dims_inner=dims_inner, activation=activation_actor).to(self.device)
         self.actor_target.load_state_dict(self.actor.state_dict())
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.lr, weight_decay=self.weight_decay)#torch.optim.Adam(self.actor.parameters(), lr=self.lr)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.critic = Critic(state_dim, action_dim, dims_inner=dims_inner, activation=activation_critic).to(self.device)
         self.critic_target = Critic(state_dim, action_dim, dims_inner=dims_inner, activation=activation_critic).to(self.device)
         self.critic_target.load_state_dict(self.critic.state_dict())
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.lr, weight_decay=self.weight_decay)#torch.optim.Adam(self.critic.parameters(), lr=self.lr)
-
-        # print('------------------------- Training --------------------------')
-        # print('Number of batch gradient descent per updates: ', num_grad_updates)
-        # print('batch size: ', batch_size)
-        # print('optimizer: ', self.actor_optimizer)
-        # print('\n-------------------------- Actor ---------------------------')
-        # print(activation_actor)
-        # print(self.actor)
-        # print('\n------------------------- Critic ---------------------------')
-        # print(activation_critic)
-        # print(self.critic)
-        # print('tdg_error_weight: ', self.tdg_error_weight)
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.replay_buffer = ReplayBuffer()
         self.max_action = max_action
@@ -260,7 +248,6 @@ class Agent(object):
             current_Q1, current_Q2 = self.critic(state, action)
 
             #compute TD errors
-            #print('Q1:',current_Q1.retains_grad)
             q1_td_error, q2_td_error = target_Q - current_Q1, target_Q - current_Q2
 
             # Compute critic loss
@@ -272,7 +259,6 @@ class Agent(object):
 
             if self.tdg_error_weight > 0:
               # Compute gradient critic loss
-              #print('hello')
               gradients_error_norms1 = torch.autograd.grad(outputs=q1_td_error, inputs=action,
                                                           grad_outputs=torch.ones(q1_td_error.size(), device=self.device),
                                                           retain_graph=True, create_graph=True,
@@ -310,12 +296,7 @@ class Agent(object):
                 for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
                     target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
-              
-
-
-
-
-
+        
 
 # import numpy as np
 # import torch
